@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La IA en la Educación</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --cream: #FFFCF0;
+  --pink: #FF8FAB;
+  --pink-light: #FFD6E0;
+  --blue: #5BC4F5;
+  --blue-light: #D0EFFF;
+  --purple: #B49FFF;
+  --purple-light: #EDE7FF;
+  --green: #6DD9A0;
+  --green-light: #D4F5E5;
+  --yellow: #FFD166;
+  --yellow-light: #FFF4CC;
+  --orange: #FF9A5C;
+  --orange-light: #FFE8D0;
+  --dark: #1C1C2E;
+  --border: 3px solid #1C1C2E;
+  --shadow: 5px 5px 0px #1C1C2E;
+  --radius: 20px;
+  --font: 'Baloo 2', cursive;
+}
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 20px 20px 24px;
+  position: relative;
+  background: #FFE066;
+}
+
+.outer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: center;
+  gap: 22px;
+  z-index: 10;
+  position: relative;
+}
+
+.bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+.frame {
+  width: 780px;
+  max-width: 95vw;
+  height: 92vh;
+  max-height: 900px;
+  background: var(--cream);
+  border: 4px solid var(--dark);
+  border-radius: 30px;
+  box-shadow: 10px 10px 0px var(--dark);
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.scroll-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.page { display: none; flex: 1; width: 100%; box-sizing: border-box; padding: 26px 30px 22px; overflow: hidden; flex-direction: column; position: relative; justify-content: center; gap: 14px; }
+.page.active { display: flex; animation: pageIn 0.3s ease; }
+@keyframes pageIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+#page-8 { overflow-y: auto; display: none; justify-content: flex-start; gap: 0; }
+#page-8.active { display: block; }
+
+.nav-bar {
+  background: var(--cream);
+  border-top: var(--border);
+  padding: 16px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.dots { display: flex; gap: 10px; align-items: center; }
+.dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2.5px solid var(--dark);
+  background: white; cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+.dot.active { background: var(--pink); transform: scale(1.25); }
+.dot:hover { transform: scale(1.2) rotate(15deg); }
+
+.btn {
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 16px;
+  padding: 11px 26px;
+  border: var(--border);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow);
+  background: var(--blue);
+  color: var(--dark);
+}
+.btn:hover { transform: translate(-3px,-3px) rotate(-1deg); box-shadow: 8px 8px 0px var(--dark); }
+.btn:active { transform: translate(2px,2px) rotate(0); box-shadow: 2px 2px 0px var(--dark); }
+.btn-pink { background: var(--pink); }
+.btn-green { background: var(--green); }
+.btn-purple { background: var(--purple); }
+
+.ref-btn {
+  display: block;
+  font-family: var(--font); font-weight: 700; font-size: 14px;
+  padding: 9px 26px; border: var(--border); border-radius: 50px;
+  cursor: pointer; background: var(--orange); box-shadow: var(--shadow);
+  transition: transform 0.18s, box-shadow 0.18s;
+  color: var(--dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.ref-btn:hover { transform: translate(-3px,-3px); box-shadow: 7px 7px 0px var(--dark); }
+.ref-btn.hidden { visibility: hidden; }
+
+.page-num {
+  position: absolute; top: 16px; right: 22px;
+  width: 32px; height: 32px;
+  background: var(--yellow); border: var(--border); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; box-shadow: 2px 2px 0 var(--dark);
+  font-family: var(--font);
+  animation: gentleSpin 6s ease-in-out infinite;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.page-num:hover {
+  animation-play-state: paused;
+  transform: scale(1.15) rotate(10deg);
+  box-shadow: 7px 7px 0 var(--dark);
+}
+@keyframes gentleSpin { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+
+.chapter-tag {
+  display: inline-block; border: var(--border); border-radius: 50px;
+  padding: 5px 18px; font-size: 13px; font-weight: 700;
+  margin: 0; box-shadow: 2px 2px 0 var(--dark);
+  letter-spacing: 1px; font-family: var(--font);
+  transform: rotate(-1.5deg);
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+  align-self: flex-start;
+}
+.chapter-tag:hover {
+  transform: rotate(-1.5deg) translate(-3px,-3px) scale(1.05);
+  box-shadow: 6px 6px 0 var(--dark);
+}
+
+.page-title {
+  font-family: var(--font);
+  font-size: 30px;
+  margin-bottom: 0;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.body-text { font-family: var(--font); font-weight: 500; font-size: 14px; line-height: 1.45; }
+
+.info-card {
+  background: white; border: var(--border); border-radius: var(--radius);
+  padding: 16px 18px; margin: 0; box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.3,1.5,.5,1), box-shadow 0.22s, filter 0.22s;
+}
+.info-card:hover { transform: translate(-5px,-5px) rotate(-1deg); box-shadow: 9px 9px 0px var(--dark); filter: brightness(0.97); }
+.info-card:active { transform: translate(2px,2px) rotate(0); box-shadow: 2px 2px 0px var(--dark); }
+
+.icon-circle {
+  width: 38px; height: 38px; border-radius: 50%; border: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px; box-shadow: 2px 2px 0 var(--dark);
+  transition: transform 0.25s cubic-bezier(.3,1.5,.5,1);
+}
+.info-card:hover .icon-circle { transform: rotate(-12deg) scale(1.12); }
+
+.card-title { font-family: var(--font); font-weight: 700; font-size: 16px; margin-bottom: 3px; }
+.card-desc { font-family: var(--font); font-weight: 500; font-size: 13px; color: #444; line-height: 1.4; }
+
+.dashed-box {
+  border: 3px dashed var(--dark); border-radius: var(--radius);
+  padding: 14px 18px; margin: 0;
+  font-family: var(--font); font-size: 15px; font-weight: 600; line-height: 1.5;
+  transition: transform 0.25s cubic-bezier(.3,1.5,.5,1), box-shadow 0.25s;
+  cursor: default;
+}
+.dashed-box:hover {
+  transform: translate(-4px,-4px) rotate(-0.6deg);
+  box-shadow: 6px 6px 0px var(--dark);
+}
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+/* COVER */
+.cover-icon-main {
+  width: 80px; height: 80px; background: var(--blue-light); border: var(--border);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto; box-shadow: var(--shadow);
+  animation: floatMain 3s ease-in-out infinite;
+}
+@keyframes floatMain { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-12px) rotate(3deg)} }
+
+.cover-title {
+  font-family: var(--font); font-size: 42px; text-align: center;
+  line-height: 1.1; margin: 0; font-weight: 700;
+}
+.cover-title .w1 { color: var(--blue); }
+.cover-title .w2 { color: var(--pink); }
+
+.cover-sub { text-align: center; font-family: var(--font); font-size: 17px; font-weight: 600; color: #666; margin: 0; }
+
+.cover-bullets {
+  background: var(--yellow-light); border: 3px dashed var(--dark); border-radius: var(--radius);
+  padding: 14px 22px; margin: 0; list-style: none;
+}
+.cover-bullets li {
+  font-family: var(--font); font-size: 16px; font-weight: 600;
+  padding: 6px 0; display: flex; align-items: center; gap: 12px;
+  transition: transform 0.2s;
+}
+.cover-bullets li:hover { transform: translateX(4px); }
+.cover-bullets li svg { flex-shrink: 0; }
+
+.cover-btn {
+  display: block; width: 100%; text-align: center;
+  font-family: var(--font); font-size: 20px; font-weight: 700; padding: 15px;
+  background: var(--dark); color: white; border: var(--border); border-radius: 50px;
+  cursor: pointer; box-shadow: var(--shadow);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.cover-btn:hover { transform: translate(-3px,-3px) rotate(-1deg); box-shadow: 8px 8px 0 var(--dark); }
+
+/* QUIZ */
+.quiz-tabs { display: flex; margin-bottom: 22px; border: var(--border); border-radius: var(--radius); overflow: hidden; }
+.quiz-tab {
+  flex: 1; padding: 16px 8px; font-family: var(--font); font-weight: 700; font-size: 17px;
+  cursor: pointer; border: none; background: #f0f0f0; color: #999;
+  transition: background 0.25s, color 0.25s, transform 0.15s;
+  border-right: var(--border);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.quiz-tab:last-child { border-right: none; }
+.quiz-tab.active { color: var(--dark); transform: translateY(-3px); }
+.quiz-tab.tab-easy.active { background: var(--green); }
+.quiz-tab.tab-med.active { background: var(--yellow); }
+.quiz-tab.tab-hard.active { background: var(--pink); }
+.quiz-tab:hover:not(.active) { background: #e0e0e0; color: var(--dark); }
+
+.quiz-question {
+  background: white; border: var(--border); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+  animation: slideIn 0.25s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.quiz-q-num {
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--dark);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; margin-bottom: 12px; font-family: var(--font);
+}
+
+.quiz-q-text { font-family: var(--font); font-weight: 700; font-size: 18px; margin-bottom: 14px; line-height: 1.5; }
+
+.quiz-option {
+  width: 100%; text-align: left; padding: 13px 18px; margin-bottom: 10px;
+  border: 2.5px solid #ddd; border-radius: 14px; background: white;
+  font-family: var(--font); font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; gap: 12px;
+}
+.quiz-option:hover:not(:disabled) { border-color: var(--dark); background: var(--blue-light); transform: translateX(3px); }
+.quiz-option.correct { background: var(--green-light); border-color: var(--green); border-width: 3px; }
+.quiz-option.wrong { background: var(--pink-light); border-color: var(--pink); border-width: 3px; }
+
+.quiz-result-box {
+  background: var(--purple-light); border: var(--border); border-radius: var(--radius);
+  padding: 32px 24px; text-align: center; box-shadow: var(--shadow);
+  animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* CHAT */
+.chat-wrapper {
+  background: var(--blue-light); border: var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 10px; box-shadow: var(--shadow);
+}
+.chat-header {
+  background: var(--blue); border-bottom: var(--border); padding: 8px 14px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font); font-weight: 700; font-size: 14px;
+}
+.chat-header-dot { width:9px;height:9px;border-radius:50%;background:white;border:2px solid var(--dark); }
+.chat-box { padding: 12px; min-height: 70px; max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.chat-msg {
+  max-width: 84%; padding: 9px 13px; font-family: var(--font);
+  font-size: 13px; line-height: 1.45; border: 2px solid var(--dark); font-weight: 600;
+}
+.chat-msg.bot { background: white; align-self: flex-start; border-radius: 4px 16px 16px 16px; }
+.chat-msg.user { background: var(--purple); align-self: flex-end; border-radius: 16px 16px 4px 16px; }
+
+.chat-suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; flex: 1; align-content: flex-start; }
+.chat-sug {
+  padding: 7px 13px; border: 2px solid var(--dark); border-radius: 50px; background: var(--yellow);
+  font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s; box-shadow: 2px 2px 0 var(--dark);
+}
+.chat-sug:hover { transform: translate(-2px,-2px) rotate(-1deg); box-shadow: 4px 4px 0 var(--dark); }
+
+#page-7 { justify-content: flex-start !important; gap: 12px; }
+#page-7 .chat-wrapper { flex: 1; display: flex; flex-direction: column; min-height: 0; margin: 0; }
+#page-7 .chat-box { flex: 1; min-height: 0; max-height: none; }
+#page-7 .chat-suggestions { flex: 0 0 auto; margin: 0; }
+#page-7 p.body-text { margin: 0 !important; flex: 0 0 auto; }
+
+.chat-input-row { display: flex; gap: 10px; }
+.chat-input {
+  flex: 1; padding: 13px 18px; border: var(--border); border-radius: 50px;
+  font-family: var(--font); font-size: 15px; font-weight: 600; outline: none;
+  transition: box-shadow 0.15s;
+}
+.chat-input:focus { box-shadow: 0 0 0 3px var(--purple-light); }
+.chat-send {
+  width: 48px; height: 48px; background: var(--pink); border: var(--border); border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 3px 3px 0 var(--dark); transition: transform 0.18s, box-shadow 0.18s;
+}
+.chat-send:hover { transform: scale(1.12) rotate(-8deg); box-shadow: 5px 5px 0 var(--dark); }
+
+.conclusion-main {
+  background: var(--purple-light); border: var(--border); border-radius: var(--radius);
+  padding: 16px 20px; text-align: center; box-shadow: var(--shadow); margin: 0;
+}
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0; }
+.tag {
+  padding: 7px 16px; border: 2px solid var(--dark); border-radius: 50px;
+  font-family: var(--font); font-size: 13px; font-weight: 700; box-shadow: 2px 2px 0 var(--dark);
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+}
+.tag:hover { transform: translate(-2px,-2px) rotate(-2deg); box-shadow: 4px 4px 0 var(--dark); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(28,28,46,0.55); z-index: 200;
+  display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px);
+  overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--cream); border: 4px solid var(--dark); border-radius: 26px;
+  padding: 34px 28px 26px; max-width: 460px; width: 100%;
+  box-shadow: 10px 10px 0px var(--dark); position: relative;
+  animation: popIn 0.22s cubic-bezier(.34,1.56,.64,1);
+  transform: rotate(-1deg);
+}
+.modal.tilt-right { transform: rotate(1.2deg); }
+@keyframes popIn { from{transform:scale(0.8) rotate(0);opacity:0} to{transform:scale(1) rotate(-1deg);opacity:1} }
+
+.modal-close {
+  position: absolute; top: -16px; right: -16px; width: 38px; height: 38px;
+  background: var(--pink); border: var(--border); border-radius: 50%; cursor: pointer;
+  font-size: 19px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: transform 0.18s; font-family: var(--font);
+}
+.modal-close:hover { transform: rotate(90deg) scale(1.15); }
+
+.modal-icon {
+  width: 70px; height: 70px; border-radius: 50%; border: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; box-shadow: var(--shadow);
+}
+
+.modal-title {
+  font-family: var(--font); font-size: 28px; font-weight: 700; text-align: center;
+  margin-bottom: 16px; letter-spacing: 0.5px;
+}
+
+.modal-body {
+  border: 3px dashed var(--dark); border-radius: 14px; padding: 18px;
+  background: var(--yellow-light); font-family: var(--font); font-size: 16px;
+  line-height: 1.75; margin-bottom: 18px; font-weight: 500;
+  max-height: 320px; overflow-y: auto;
+}
+.modal-body ul { padding-left: 22px; margin-top: 8px; }
+.modal-body li { margin-bottom: 8px; }
+
+.modal-ok {
+  display: block; width: 100%; padding: 15px; background: var(--dark); color: white;
+  border: var(--border); border-radius: 50px; font-family: var(--font); font-weight: 700; font-size: 18px;
+  cursor: pointer; box-shadow: var(--shadow); transition: transform 0.18s, box-shadow 0.18s;
+}
+.modal-ok:hover { transform: translate(-2px,-2px); box-shadow: 8px 8px 0 var(--dark); }
+
+/* MOBILE RESPONSIVE FIX */
+@media (max-width: 600px) {
+  body { padding: 0; }
+  .outer-wrap { gap: 14px; padding: 14px 18px; box-sizing: border-box; width: 100%; }
+  .frame { width: 100%; max-width: 100%; height: 86vh; }
+  .page { padding: 20px 18px 18px; gap: 10px; }
+  .cover-title { font-size: 30px; }
+  .cover-icon-main { width: 60px; height: 60px; }
+  .page-title { font-size: 22px; }
+  .nav-bar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+  }
+  .nav-bar > div:last-child {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  .nav-bar .btn {
+    flex: 1;
+    text-align: center;
+  }
+  .dots { order: 3; }
+}
+</style>
+</head>
+<body>
+
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+<div class="outer-wrap">
+<div class="frame">
+<div class="scroll-area">
+
+  <!-- PAGE 1: COVER -->
+  <div class="page active" id="page-1">
+    <div class="cover-icon-main">
+      <svg width="56" height="56" viewBox="0 0 50 50" fill="none">
+        <rect x="6" y="14" width="38" height="28" rx="6" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2.5"/>
+        <rect x="14" y="6" width="22" height="14" rx="4" fill="#B49FFF" stroke="#1C1C2E" stroke-width="2.5"/>
+        <circle cx="19" cy="13" r="3" fill="white" stroke="#1C1C2E" stroke-width="2"/>
+        <circle cx="31" cy="13" r="3" fill="white" stroke="#1C1C2E" stroke-width="2"/>
+        <path d="M16 28 Q25 35 34 28" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <rect x="22" y="42" width="6" height="5" rx="1" fill="#1C1C2E"/>
+        <rect x="15" y="46" width="20" height="3" rx="1.5" fill="#1C1C2E"/>
+      </svg>
+    </div>
+    <h1 class="cover-title"><span class="w1">La IA</span> en la<br><span class="w2">Educación</span></h1>
+    <p class="cover-sub">Una mejora para docentes y alumnos</p>
+    <ul class="cover-bullets">
+      <li><svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#D0EFFF" stroke="#1C1C2E" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Aprende cómo la IA transforma el aula</li>
+      <li><svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#D4F5E5" stroke="#1C1C2E" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Descubre cómo apoya a los docentes</li>
+      <li><svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#EDE7FF" stroke="#1C1C2E" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Entiende cómo beneficia a los alumnos</li>
+      <li><svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFF4CC" stroke="#1C1C2E" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Pregúntale a la IA sobre el tema</li>
+      <li><svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFD6E0" stroke="#1C1C2E" stroke-width="2"/><path d="M6 10l3 3 5-5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> Pon a prueba lo que aprendiste</li>
+    </ul>
+    <button class="cover-btn" onclick="goToPage(2)">¡Vamos a aprender! →</button>
+  </div>
+
+  <!-- PAGE 2: QUE ES LA IA -->
+  <div class="page" id="page-2">
+    <div class="page-num">2</div>
+    <div class="chapter-tag" style="background:var(--blue-light);">CAPÍTULO 01</div>
+    <h2 class="page-title">¿Qué es la IA en la educación?</h2>
+    <div class="dashed-box" style="background:var(--blue-light);">
+      La inteligencia artificial en la educación es el uso de tecnología inteligente para <strong>apoyar cómo enseñamos y cómo aprendemos</strong>, dentro y fuera del aula.
+    </div>
+    <div class="info-card" onclick="openModal('ia-def')">
+      <div class="icon-circle" style="background:var(--blue-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="10" rx="7" ry="6" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2"/><path d="M9 10 Q12 14 15 10" stroke="#1C1C2E" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="9.5" cy="9" r="1.2" fill="#1C1C2E"/><circle cx="14.5" cy="9" r="1.2" fill="#1C1C2E"/><path d="M8 16 Q12 20 16 16" stroke="#1C1C2E" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">¿Qué es exactamente la IA?</div>
+      <div class="card-desc">Sistemas que imitan procesos del pensamiento humano para resolver problemas.</div>
+    </div>
+    <div class="info-card" onclick="openModal('ia-edu')">
+      <div class="icon-circle" style="background:var(--green-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="13" rx="3" fill="#6DD9A0" stroke="#1C1C2E" stroke-width="2"/><path d="M8 19h8M12 18v2" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/><path d="M7 10h10M7 13h6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">IA + Educación, ¿qué significa?</div>
+      <div class="card-desc">Herramientas como ChatGPT, tutores virtuales y plataformas adaptativas en el aula.</div>
+    </div>
+    <div class="info-card" onclick="openModal('ia-hoy')">
+      <div class="icon-circle" style="background:var(--yellow-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#FFD166" stroke="#1C1C2E" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">¿Ya está pasando?</div>
+      <div class="card-desc">Sí. Escuelas en todo el mundo ya la integran con guías para usarla de forma ética.</div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: DOCENTES -->
+  <div class="page" id="page-3">
+    <div class="page-num">3</div>
+    <div class="chapter-tag" style="background:var(--green-light);">CAPÍTULO 02</div>
+    <h2 class="page-title">¿Cómo ayuda a los docentes?</h2>
+    <div class="two-col">
+      <div class="info-card" onclick="openModal('doc-materiales')">
+        <div class="icon-circle" style="background:var(--green-light);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="12" height="16" rx="2" fill="#6DD9A0" stroke="#1C1C2E" stroke-width="2"/><rect x="8" y="5" width="12" height="16" rx="2" fill="white" stroke="#1C1C2E" stroke-width="2"/><path d="M11 10h6M11 13h4" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-title">Materiales didácticos</div>
+        <div class="card-desc">Crea contenido dinámico y adaptativo al instante.</div>
+      </div>
+      <div class="info-card" onclick="openModal('doc-evaluacion')">
+        <div class="icon-circle" style="background:var(--blue-light);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#D0EFFF" stroke="#1C1C2E" stroke-width="2"/><path d="M7 17 L10 12 L13 15 L16 8" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        <div class="card-title">Evaluación</div>
+        <div class="card-desc">Optimiza y agiliza el proceso de evaluar alumnos.</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="info-card" onclick="openModal('doc-tiempo')">
+        <div class="icon-circle" style="background:var(--yellow-light);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" fill="#FFD166" stroke="#1C1C2E" stroke-width="2"/><path d="M12 9v4l2.5 2.5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/><path d="M9 3h6" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-title">Ahorro de tiempo</div>
+        <div class="card-desc">Menos tareas administrativas repetitivas.</div>
+      </div>
+      <div class="info-card" onclick="openModal('doc-personalizacion')">
+        <div class="icon-circle" style="background:var(--pink-light);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="#FF8FAB" stroke="#1C1C2E" stroke-width="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M17 11l2 2 3-3" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        <div class="card-title">Personalización</div>
+        <div class="card-desc">Detecta las necesidades de cada grupo.</div>
+      </div>
+    </div>
+    <div class="dashed-box" style="background:var(--green-light);" id="quoteBox3">
+      "La IA ofrece aplicaciones en la personalización del aprendizaje y la optimización de los procesos de evaluación."
+      <div style="font-size:14px;color:#888;margin-top:6px;">— Leal Ríos et al., 2025</div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: ALUMNOS -->
+  <div class="page" id="page-4">
+    <div class="page-num">4</div>
+    <div class="chapter-tag" style="background:var(--purple-light);">CAPÍTULO 03</div>
+    <h2 class="page-title">¿Cómo ayuda a los alumnos?</h2>
+    <div class="info-card" onclick="openModal('alu-personalizacion')">
+      <div class="icon-circle" style="background:var(--purple-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3L14.5 8.5H20L15.5 12L17.5 18L12 14.5L6.5 18L8.5 12L4 8.5H9.5L12 3Z" fill="#B49FFF" stroke="#1C1C2E" stroke-width="2" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="card-title">Aprendizaje personalizado</div>
+      <div class="card-desc">La IA adapta el contenido según el ritmo y estilo de cada estudiante.</div>
+    </div>
+    <div class="info-card" onclick="openModal('alu-retroalimentacion')">
+      <div class="icon-circle" style="background:var(--blue-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v12H4z" rx="3" fill="#D0EFFF" stroke="#1C1C2E" stroke-width="2"/><path d="M8 20l4-4 4 4" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M8 10h8M8 13h5" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">Retroalimentación inmediata</div>
+      <div class="card-desc">Correcciones y sugerencias al instante, sin esperar al maestro.</div>
+    </div>
+    <div class="info-card" onclick="openModal('alu-acceso')">
+      <div class="icon-circle" style="background:var(--green-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#D4F5E5" stroke="#1C1C2E" stroke-width="2"/><ellipse cx="12" cy="12" rx="4" ry="9" stroke="#1C1C2E" stroke-width="2" fill="none"/><path d="M3 12h18" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">Acceso al conocimiento</div>
+      <div class="card-desc">Facilita entender información actualizada sobre cualquier tema.</div>
+    </div>
+  </div>
+
+  <!-- PAGE 5: ETICA -->
+  <div class="page" id="page-5">
+    <div class="page-num">5</div>
+    <div class="chapter-tag" style="background:var(--orange-light);">CAPÍTULO 04</div>
+    <h2 class="page-title">¿Qué hay que tener en cuenta?</h2>
+    <div class="dashed-box" style="background:var(--orange-light);">
+      La IA tiene gran potencial, pero también trae <strong>desafíos éticos y de seguridad</strong> que no podemos ignorar.
+    </div>
+    <div class="info-card" onclick="openModal('etica-etica')">
+      <div class="icon-circle" style="background:var(--orange-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v5c0 5 3.5 9.3 8 10.5C16.5 21.3 20 17 20 12V7L12 3Z" fill="#FFE8D0" stroke="#1C1C2E" stroke-width="2"/><path d="M12 8v5M12 15v1" stroke="#1C1C2E" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">Vacíos éticos y legales</div>
+      <div class="card-desc">Usar IA sin reglas claras puede generar desconfianza y problemas de privacidad.</div>
+    </div>
+    <div class="info-card" onclick="openModal('etica-colaboracion')">
+      <div class="icon-circle" style="background:var(--purple-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3.5" fill="#EDE7FF" stroke="#1C1C2E" stroke-width="2"/><circle cx="16" cy="8" r="3.5" fill="#EDE7FF" stroke="#1C1C2E" stroke-width="2"/><path d="M2 19c0-3 2.7-5 6-5M22 19c0-3-2.7-5-6-5M12 15c-2 0-4 1.5-4 4h8c0-2.5-2-4-4-4Z" stroke="#1C1C2E" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">Colaboración necesaria</div>
+      <div class="card-desc">Docentes, alumnos, directivos y desarrolladores deben trabajar juntos.</div>
+    </div>
+    <div class="info-card" onclick="openModal('etica-formacion')">
+      <div class="icon-circle" style="background:var(--green-light);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" fill="#D4F5E5" stroke="#1C1C2E" stroke-width="2"/><path d="M7 9h10M7 13h7M7 17h5" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-title">Guías y formación docente</div>
+      <div class="card-desc">Las instituciones necesitan reglas claras y capacitación para integrar la IA bien.</div>
+    </div>
+  </div>
+
+  <!-- PAGE 6: CONCLUSION -->
+  <div class="page" id="page-6">
+    <div class="page-num">6</div>
+    <h2 class="page-title" style="text-align:center;">La IA no reemplaza,<br>complementa</h2>
+    <div class="conclusion-main">
+      <p class="body-text" style="font-size:18px;">La IA no sustituye ni al docente ni al alumno. Funciona como un <strong>complemento</strong> que apoya la enseñanza y potencia el aprendizaje continuo, siempre que se integre de forma <strong>ética y colaborativa</strong>.</p>
+    </div>
+    <div class="two-col">
+      <div class="info-card" style="background:var(--blue-light);" onclick="openModal('concl-docentes')">
+        <div class="icon-circle" style="background:white;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </div>
+        <div class="card-title">Para docentes</div>
+        <div class="card-desc">Herramienta que libera tiempo y potencia su enseñanza.</div>
+      </div>
+      <div class="info-card" style="background:var(--purple-light);" onclick="openModal('concl-alumnos')">
+        <div class="icon-circle" style="background:white;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="12" rx="2" fill="#B49FFF" stroke="#1C1C2E" stroke-width="2"/><path d="M9 19h6M12 16v3" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-title">Para alumnos</div>
+        <div class="card-desc">Apoyo personalizado para aprender a su propio ritmo.</div>
+      </div>
+    </div>
+    <div class="tag-row">
+      <span class="tag" style="background:var(--pink-light);" onclick="openModal('tag-personalizacion')">Personalización</span>
+      <span class="tag" style="background:var(--blue-light);" onclick="openModal('tag-etica')">Ética</span>
+      <span class="tag" style="background:var(--green-light);" onclick="openModal('tag-colaboracion')">Colaboración</span>
+      <span class="tag" style="background:var(--yellow-light);" onclick="openModal('tag-mejora')">Mejora continua</span>
+    </div>
+  </div>
+
+  <!-- PAGE 7: CHAT -->
+  <div class="page" id="page-7">
+    <div class="page-num">7</div>
+    <h2 class="page-title">Pregúntale a la IA 💬</h2>
+    <p class="body-text" style="color:#666;margin-bottom:16px;">Toca una pregunta y descubre la respuesta. ¡Hay muchas más esperando!</p>
+    <div class="chat-wrapper">
+      <div class="chat-header">
+        <div class="chat-header-dot"></div><div class="chat-header-dot"></div><div class="chat-header-dot"></div>
+        <span style="margin-left:6px;">🤖 Asistente IA — Educación</span>
+      </div>
+      <div class="chat-box" id="chatBox">
+        <div class="chat-msg bot">¡Hola! 👋 Soy tu asistente de <strong>IA en la educación</strong>. Toca una de las preguntas de abajo y te explico de forma sencilla. 🎓</div>
+      </div>
+    </div>
+    <div class="chat-suggestions" id="chatSugs"></div>
+    <button class="btn btn-purple" style="width:100%;" onclick="refreshSuggestions()">Ver otras preguntas</button>
+  </div>
+
+  <!-- PAGE 8: QUIZ -->
+  <div class="page" id="page-8">
+    <div class="page-num">8</div>
+    <h2 class="page-title" style="text-align:center;">Desafío Final</h2>
+    <p class="body-text" style="text-align:center;color:#666;margin-bottom:20px;">¿Listo para demostrar lo que aprendiste?</p>
+    <div class="quiz-tabs">
+      <button class="quiz-tab tab-easy active" id="tab-facil" onclick="setTab('facil')">Fácil</button>
+      <button class="quiz-tab tab-med" id="tab-medio" onclick="setTab('medio')">Medio</button>
+      <button class="quiz-tab tab-hard" id="tab-dificil" onclick="setTab('dificil')">Difícil</button>
+    </div>
+    <div id="quizArea"></div>
+    <div id="quizResult" style="display:none;"></div>
+  </div>
+
+</div>
+
+  <div class="nav-bar">
+    <div class="dots" id="dotsContainer"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-pink" id="prevBtn" onclick="prevPage()" style="display:none;">← Atrás</button>
+      <button class="btn" id="nextBtn" onclick="nextPage()">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
+<button class="ref-btn" id="refBtn" onclick="openModal('referencias')">REFERENCIAS</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-icon" id="modalIcon"></div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <button class="modal-ok" onclick="closeModal()">¡Entendido!</button>
+  </div>
+</div>
+
+<script>
+// ── BG DOTS (original style: scattered colored circles on solid bg) ──
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+const palette = ['#FF8FAB','#5BC4F5','#B49FFF','#6DD9A0','#FFD166','#FF9A5C'];
+let dots = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initDots() {
+  dots = [];
+  const spacing = 70;
+  const cols = Math.ceil(canvas.width / spacing) + 1;
+  const rows = Math.ceil(canvas.height / spacing) + 1;
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      dots.push({
+        x: i * spacing + spacing/2 + (Math.random()-0.5)*14,
+        y: j * spacing + spacing/2 + (Math.random()-0.5)*14,
+        r: 12 + Math.random() * 3, // 12-15px
+        colorIdx: Math.floor(Math.random()*palette.length),
+        nextColorIdx: Math.floor(Math.random()*palette.length),
+        progress: Math.random(),
+        speed: 0.0018 + Math.random()*0.0025,
+      });
+    }
+  }
+}
+
+function lerpColor(c1,c2,t) {
+  const h = s => parseInt(s,16);
+  const r1=h(c1.slice(1,3)),g1=h(c1.slice(3,5)),b1=h(c1.slice(5,7));
+  const r2=h(c2.slice(1,3)),g2=h(c2.slice(3,5)),b2=h(c2.slice(5,7));
+  return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
+}
+
+function drawDots() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#FFE066';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  dots.forEach(d => {
+    d.progress += d.speed;
+    if (d.progress >= 1) { d.progress = 0; d.colorIdx = d.nextColorIdx; d.nextColorIdx = Math.floor(Math.random()*palette.length); }
+    const color = lerpColor(palette[d.colorIdx], palette[d.nextColorIdx], d.progress);
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawDots);
+}
+resizeCanvas(); initDots(); drawDots();
+window.addEventListener('resize', () => { resizeCanvas(); initDots(); });
+
+// ── NAVIGATION ──
+const TOTAL = 8;
+let current = 1;
+function buildDots() {
+  const c = document.getElementById('dotsContainer'); c.innerHTML='';
+  for (let i=1;i<=TOTAL;i++) {
+    const d = document.createElement('div');
+    d.className='dot'+(i===current?' active':'');
+    d.onclick=()=>goToPage(i);
+    c.appendChild(d);
+  }
+  document.getElementById('prevBtn').style.display = current>1?'inline-block':'none';
+  document.getElementById('nextBtn').style.display = current<TOTAL?'inline-block':'none';
+}
+function goToPage(n) {
+  document.getElementById('page-'+current).classList.remove('active');
+  current=n;
+  document.getElementById('page-'+current).classList.add('active');
+  buildDots();
+  document.querySelector('.scroll-area').scrollTop = 0;
+  document.getElementById('refBtn').classList.toggle('hidden', n===8);
+  if (n===8) renderQuiz();
+}
+function nextPage(){if(current<TOTAL)goToPage(current+1);}
+function prevPage(){if(current>1)goToPage(current-1);}
+
+// ── MODALS ──
+const ICONS = {
+  brain: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="10" rx="7" ry="6" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2"/><path d="M9 10 Q12 14 15 10" stroke="#1C1C2E" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="9.5" cy="9" r="1.2" fill="#1C1C2E"/><circle cx="14.5" cy="9" r="1.2" fill="#1C1C2E"/><path d="M8 16 Q12 20 16 16" stroke="#1C1C2E" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+  book: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="13" rx="3" fill="#6DD9A0" stroke="#1C1C2E" stroke-width="2"/><path d="M8 19h8M12 18v2" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/><path d="M7 10h10M7 13h6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>',
+  clock: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" fill="#FFD166" stroke="#1C1C2E" stroke-width="2"/><path d="M12 9v4l2.5 2.5" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/><path d="M9 3h6" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>',
+  doc: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="12" height="16" rx="2" fill="#6DD9A0" stroke="#1C1C2E" stroke-width="2"/><rect x="8" y="5" width="12" height="16" rx="2" fill="white" stroke="#1C1C2E" stroke-width="2"/><path d="M11 10h6M11 13h4" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  chart: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#D0EFFF" stroke="#1C1C2E" stroke-width="2"/><path d="M7 17 L10 12 L13 15 L16 8" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+  target: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#FF8FAB" stroke="#1C1C2E" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="white" stroke="#1C1C2E" stroke-width="1.8"/><circle cx="12" cy="12" r="1.8" fill="#1C1C2E"/></svg>',
+  star: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 3L14.5 8.5H20L15.5 12L17.5 18L12 14.5L6.5 18L8.5 12L4 8.5H9.5L12 3Z" fill="#B49FFF" stroke="#1C1C2E" stroke-width="2" stroke-linejoin="round"/></svg>',
+  chat: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v12H4z" rx="3" fill="#D0EFFF" stroke="#1C1C2E" stroke-width="2"/><path d="M8 20l4-4 4 4" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M8 10h8M8 13h5" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  globe: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#D4F5E5" stroke="#1C1C2E" stroke-width="2"/><ellipse cx="12" cy="12" rx="4" ry="9" stroke="#1C1C2E" stroke-width="2" fill="none"/><path d="M3 12h18" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>',
+  scale: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v5c0 5 3.5 9.3 8 10.5C16.5 21.3 20 17 20 12V7L12 3Z" fill="#FFE8D0" stroke="#1C1C2E" stroke-width="2"/><path d="M12 8v5M12 15v1" stroke="#1C1C2E" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  people: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3.5" fill="#EDE7FF" stroke="#1C1C2E" stroke-width="2"/><circle cx="16" cy="8" r="3.5" fill="#EDE7FF" stroke="#1C1C2E" stroke-width="2"/><path d="M2 19c0-3 2.7-5 6-5M22 19c0-3-2.7-5-6-5M12 15c-2 0-4 1.5-4 4h8c0-2.5-2-4-4-4Z" stroke="#1C1C2E" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+  clipboard: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" fill="#D4F5E5" stroke="#1C1C2E" stroke-width="2"/><path d="M7 9h10M7 13h7M7 17h5" stroke="#1C1C2E" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  teacher: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
+  student: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="12" rx="2" fill="#B49FFF" stroke="#1C1C2E" stroke-width="2"/><path d="M9 19h6M12 16v3" stroke="#1C1C2E" stroke-width="2" stroke-linecap="round"/></svg>',
+  growth: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 18 L9 12 L13 15 L20 6" stroke="#1C1C2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M16 6h4v4" stroke="#1C1C2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+  shelf: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="4" height="16" fill="#5BC4F5" stroke="#1C1C2E" stroke-width="2"/><rect x="10" y="6" width="4" height="14" fill="#6DD9A0" stroke="#1C1C2E" stroke-width="2"/><rect x="16" y="3" width="4" height="17" fill="#FFD166" stroke="#1C1C2E" stroke-width="2"/></svg>',
+};
+
+const modals = {
+  'ia-def':{icon:ICONS.brain,bg:'var(--blue-light)',title:'Inteligencia Artificial',body:'La Inteligencia Artificial (IA) es la tecnología que permite a las computadoras realizar tareas que normalmente requieren inteligencia humana: entender texto, reconocer imágenes o tomar decisiones. No es magia: son algoritmos entrenados con millones de datos para aprender patrones y responder de forma inteligente.'},
+  'ia-edu':{icon:ICONS.book,bg:'var(--green-light)',title:'IA en la Educación',body:'Cuando la IA llega al aula, puede actuar como un tutor virtual que responde preguntas, una plataforma que adapta el contenido a cada estudiante, o una herramienta que ayuda al maestro a preparar materiales. Ejemplos: Khan Academy, Duolingo, ChatGPT y plataformas como Google Classroom con IA integrada.'},
+  'ia-hoy':{icon:ICONS.clock,bg:'var(--yellow-light)',title:'Ya está pasando',body:'Puerto Rico ya integra la IA en sus escuelas con enfoque ético y seguro, desarrollando el "Modelo Sense" para que los estudiantes usen la tecnología de forma responsable. En México y toda América Latina, la adopción crece rápidamente en universidades y preparatorias.'},
+  'doc-materiales':{icon:ICONS.doc,bg:'var(--green-light)',title:'Materiales Didácticos',body:'La IA generativa puede crear presentaciones, ejercicios, resúmenes y videos educativos de forma rápida. El docente describe lo que necesita y la IA genera el material, que luego puede revisar y adaptar. Esto libera horas de trabajo y permite crear contenido más dinámico y visual.'},
+  'doc-evaluacion':{icon:ICONS.chart,bg:'var(--blue-light)',title:'Evaluación con IA',body:'La IA puede revisar exámenes automáticamente, generar rúbricas personalizadas, detectar patrones en los errores de los alumnos y sugerir actividades de refuerzo. El maestro sigue tomando las decisiones finales, pero con mucha más información y en menos tiempo.'},
+  'doc-tiempo':{icon:ICONS.clock,bg:'var(--yellow-light)',title:'Ahorro de Tiempo',body:'Tareas como redactar comunicados, organizar listas, generar reportes o buscar recursos bibliográficos pueden ser asistidas por IA. Estudios recientes indican que los docentes pueden ahorrar entre 3 y 5 horas semanales usando herramientas de IA para estas tareas administrativas.'},
+  'doc-personalizacion':{icon:ICONS.target,bg:'var(--pink-light)',title:'Personalización Docente',body:'La IA puede analizar el desempeño del grupo completo y detectar qué temas necesitan más refuerzo, qué alumnos van adelantados y cuáles necesitan apoyo. Con esa información, el docente puede planear clases más efectivas y dedicar atención personalizada a quien más lo necesita.'},
+  'alu-personalizacion':{icon:ICONS.star,bg:'var(--purple-light)',title:'Aprendizaje Personalizado',body:'No todos aprendemos igual ni al mismo ritmo. La IA detecta en qué temas tienes dificultades y te ofrece más práctica en esas áreas, o avanza más rápido cuando ya dominaste un concepto. Es como tener un tutor que trabaja solo para ti y que nunca se cansa de explicar.'},
+  'alu-retroalimentacion':{icon:ICONS.chat,bg:'var(--blue-light)',title:'Retroalimentación Inmediata',body:'Antes, si tenías una duda a las 10 de la noche, esperabas al día siguiente. Con herramientas de IA recibes una explicación al instante, en el momento exacto en que la necesitas. Esto acelera el aprendizaje y reduce la frustración de quedarse atascado.'},
+  'alu-acceso':{icon:ICONS.globe,bg:'var(--green-light)',title:'Acceso al Conocimiento',body:'La IA actúa como un buscador inteligente que no solo da links, sino que explica conceptos complejos en lenguaje sencillo, genera resúmenes de textos largos y ayuda a entender temas difíciles con ejemplos adaptados a tu nivel. Democratiza el acceso al conocimiento para todos.'},
+  'etica-etica':{icon:ICONS.scale,bg:'var(--orange-light)',title:'Vacíos Éticos y Legales',body:'La IA generativa puede producir información incorrecta (alucinaciones), reproducir sesgos de sus datos de entrenamiento, o ser usada para hacer trampa en tareas. También existe el debate sobre privacidad: ¿qué datos de los alumnos recopilan estas plataformas y cómo los usan?'},
+  'etica-colaboracion':{icon:ICONS.people,bg:'var(--purple-light)',title:'Colaboración como Clave',body:'García-Peñalvo (2024) concluye que para que la IA mejore la educación, necesita la participación activa de docentes que guíen su uso, estudiantes que la aprovechen con responsabilidad, directivos que creen políticas claras y desarrolladores que construyan herramientas éticas.'},
+  'etica-formacion':{icon:ICONS.clipboard,bg:'var(--green-light)',title:'Guías y Formación Docente',body:'No basta con dar acceso a los maestros a herramientas de IA: necesitan formación específica para saber cómo integrarlas en sus clases, cómo evaluar si los alumnos las usan bien, y cómo mantener el pensamiento crítico como parte central de la educación.'},
+  'concl-docentes':{icon:ICONS.teacher,bg:'var(--blue-light)',title:'La IA para Docentes',body:'<ul><li>Genera materiales y ejercicios en minutos, no horas</li><li>Ayuda a calificar y dar seguimiento al progreso del grupo</li><li>Detecta qué alumnos necesitan más apoyo</li><li>Libera tiempo de tareas administrativas para enfocarse en enseñar</li><li>Permite preparar clases más dinámicas y personalizadas</li></ul>'},
+  'concl-alumnos':{icon:ICONS.student,bg:'var(--purple-light)',title:'La IA para Alumnos',body:'<ul><li>Explica los temas a tu propio ritmo, sin prisas</li><li>Responde dudas al instante, a cualquier hora</li><li>Genera ejercicios extra en lo que más se te dificulta</li><li>Facilita entender textos complejos con ejemplos simples</li><li>Te acompaña como un tutor personal disponible siempre</li></ul>'},
+  'tag-personalizacion':{icon:ICONS.target,bg:'var(--pink-light)',title:'Personalización',body:'En IA, personalización significa que el sistema adapta el contenido, el ritmo y la dificultad de las actividades según las necesidades específicas de cada estudiante, en lugar de ofrecer lo mismo a todos por igual.'},
+  'tag-etica':{icon:ICONS.scale,bg:'var(--blue-light)',title:'Ética',body:'En el contexto de la IA, la ética se refiere a usar esta tecnología de forma responsable: respetando la privacidad de los datos, evitando sesgos injustos, siendo transparentes sobre cuándo se usa IA, y asegurando que beneficie a todos por igual.'},
+  'tag-colaboracion':{icon:ICONS.people,bg:'var(--green-light)',title:'Colaboración',body:'Para que la IA funcione bien en la educación, no basta con la tecnología sola: se necesita que docentes, alumnos, directivos y desarrolladores trabajen juntos, compartiendo ideas y estableciendo reglas claras de uso.'},
+  'tag-mejora':{icon:ICONS.growth,bg:'var(--yellow-light)',title:'Mejora Continua',body:'La IA en educación no es una solución única y terminada: evoluciona constantemente. Esto significa que docentes y alumnos deben seguir aprendiendo a usarla mejor, y las herramientas se van perfeccionando con el tiempo.'},
+  'referencias':{icon:ICONS.shelf,bg:'var(--blue-light)',title:'Referencias',body:`Díaz Noguera, M. D. (Il.), Hervás-Gómez, C. (Il.) & Grosu, E. F. (Il.). (2025). <em>Inteligencia artificial y educación: innovación pedagógica para un aprendizaje transformador</em> (1 ed.). Dykinson. <a href="https://elibro.net/es/lc/iberoleon/titulos/285869" target="_blank">elibro.net</a><br><br>
+Leal Ríos, F., Hernández Ramírez, M. & Ruiz Méndez, M. (2025). <em>Educación e inteligencia artificial. Generando ecosistemas de aprendizaje adaptativo</em> (1 ed.). Dykinson. <a href="https://elibro.net/es/lc/iberoleon/titulos/288649" target="_blank">elibro.net</a><br><br>
+Diario de Yucatán. (2026, 3 de junio). Escuelas adoptan la IA. <em>Diario de Yucatán</em>, p. 4. <a href="https://www.pressreader.com/mexico/diario-de-yucatan/20260603/282419880926237" target="_blank">pressreader.com</a><br><br>
+Vera, F. (2023). Integración de la Inteligencia Artificial en la Educación superior: Desafíos y oportunidades. <em>Transformar, 4</em>(1), 17–34. <a href="https://www.revistatransformar.cl/index.php/transformar/article/view/84" target="_blank">revistatransformar.cl</a><br><br>
+García-Peñalvo, F. J. (2024). Inteligencia artificial generativa y educación: Un análisis desde múltiples perspectivas. <em>Education in the Knowledge Society (EKS), 25</em>, e31942. <a href="https://doi.org/10.14201/eks.31942" target="_blank">doi.org</a>`}
+};
+
+function openModal(key) {
+  const m = modals[key]; if(!m) return;
+  document.getElementById('modalIcon').innerHTML = m.icon;
+  document.getElementById('modalIcon').style.background = m.bg;
+  document.getElementById('modalTitle').textContent = m.title;
+  document.getElementById('modalBody').innerHTML = m.body;
+  const box = document.getElementById('modalBox');
+  box.classList.toggle('tilt-right', Math.random() > 0.5);
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModalOut(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+
+// ── CHAT: 30 preguntas y respuestas predeterminadas ──
+const qaBank = [
+  { q:'¿Qué es una red neuronal?', a:'Es un sistema inspirado en cómo funciona el cerebro humano, formado por capas de "neuronas" artificiales conectadas entre sí. Cada conexión aprende patrones a partir de datos, y así la red puede reconocer imágenes, entender texto o tomar decisiones.' },
+  { q:'¿Cómo ayuda la IA a los maestros?', a:'Les ayuda a crear materiales didácticos rápido, calificar exámenes de forma automática, detectar qué alumnos necesitan más apoyo y ahorrar tiempo en tareas administrativas. Así pueden enfocarse más en enseñar.' },
+  { q:'¿Qué es el aprendizaje personalizado con IA?', a:'Es cuando el sistema adapta el contenido, la dificultad y el ritmo de las actividades según las necesidades específicas de cada estudiante, en lugar de enseñar lo mismo a todos por igual.' },
+  { q:'¿La IA puede reemplazar a los profesores?', a:'No. La IA es una herramienta que apoya y complementa el trabajo del docente, pero no puede reemplazar la guía humana, la empatía ni el criterio pedagógico de un maestro.' },
+  { q:'¿Es ético que los estudiantes usen IA para hacer tareas?', a:'Depende del uso: usarla para entender un tema o practicar está bien, pero copiar respuestas sin aprender nada no lo es. Lo importante es usarla como apoyo, no como sustituto del aprendizaje.' },
+  { q:'¿Cómo aprenden las máquinas?', a:'Aprenden analizando muchos ejemplos (datos) y encontrando patrones en ellos. Mientras más datos de calidad reciben, mejor pueden predecir o responder ante situaciones nuevas.' },
+  { q:'Dame ejemplos de herramientas de IA en el salón de clases', a:'Algunos ejemplos son Khan Academy y Duolingo (que personalizan el aprendizaje), ChatGPT (para resolver dudas), y Google Classroom con funciones de IA integradas para organizar tareas.' },
+  { q:'¿Es segura mi información cuando uso IA para estudiar?', a:'Depende de la plataforma. Algunas tienen políticas claras de privacidad, pero siempre es importante leer qué datos recopilan y evitar compartir información personal sensible sin necesidad.' },
+  { q:'¿Qué es ChatGPT y para qué sirve en la escuela?', a:'Es un asistente de IA que entiende y genera texto. En la escuela puede ayudar a explicar conceptos difíciles, practicar idiomas, hacer resúmenes o generar ideas para proyectos.' },
+  { q:'¿Cómo puede la IA ayudar a evaluar exámenes?', a:'Puede calificar preguntas de opción múltiple automáticamente, detectar patrones de errores comunes en un grupo, y sugerir qué temas reforzar. El maestro sigue tomando las decisiones finales.' },
+  { q:'¿La IA en la educación se usa en todo el mundo?', a:'Sí, cada vez más países la integran. Por ejemplo, Puerto Rico ya tiene guías oficiales para usarla de forma ética en sus escuelas, y muchas universidades en Latinoamérica la están adoptando.' },
+  { q:'¿La IA sirve para estudiantes de universidad?', a:'Sí, mucho. Puede ayudar a entender temas complejos, organizar investigaciones, practicar para exámenes y hasta mejorar la escritura académica, siempre usándola como apoyo y no como atajo.' },
+  { q:'¿Qué significa "inteligencia artificial"?', a:'Es la capacidad de una máquina para realizar tareas que normalmente requieren inteligencia humana, como entender lenguaje, reconocer imágenes o tomar decisiones basadas en información.' },
+  { q:'¿Qué son las "alucinaciones" de la IA?', a:'Es cuando una IA genera información que suena correcta pero en realidad es falsa o inventada. Por eso siempre es importante verificar lo que dice una IA antes de confiar en ello completamente.' },
+  { q:'¿Qué es un tutor virtual?', a:'Es un programa de IA diseñado para guiar el aprendizaje de un estudiante, respondiendo preguntas, explicando temas y ofreciendo ejercicios adaptados a su nivel, como un maestro personal disponible siempre.' },
+  { q:'¿Qué ventaja tiene la retroalimentación inmediata?', a:'Permite resolver dudas justo en el momento en que surgen, sin tener que esperar a la siguiente clase. Esto ayuda a no quedarse atascado y a aprender de forma más fluida.' },
+  { q:'¿Por qué es importante la formación docente en IA?', a:'Porque no basta con tener acceso a la tecnología: los maestros necesitan saber cómo integrarla bien en sus clases y cómo enseñar a los alumnos a usarla de forma crítica y responsable.' },
+  { q:'¿Qué es un sesgo en la inteligencia artificial?', a:'Es cuando un sistema de IA favorece o discrimina ciertos grupos sin querer, porque los datos con los que fue entrenado no eran representativos o equilibrados. Por eso es importante revisar y corregir estos sesgos.' },
+  { q:'¿La IA puede ayudar a estudiantes con dificultades de aprendizaje?', a:'Sí, puede adaptar el ritmo, repetir explicaciones de formas distintas y ofrecer apoyo extra en los temas que se les dificultan más, dando una atención más personalizada.' },
+  { q:'¿Qué es el pensamiento crítico frente a la IA?', a:'Es la capacidad de cuestionar y verificar lo que la IA responde, en lugar de creerle todo automáticamente. Sigue siendo una habilidad esencial porque la IA puede equivocarse.' },
+  { q:'¿Cómo puede la IA personalizar el ritmo de aprendizaje?', a:'Analiza qué tan rápido o lento avanza un estudiante en cada tema y ajusta la dificultad: si domina algo, avanza más rápido; si tiene dudas, ofrece más práctica antes de seguir.' },
+  { q:'¿Qué relación tiene la IA con la privacidad de datos?', a:'Las plataformas de IA recopilan información sobre cómo usamos sus herramientas. Es importante que existan reglas claras sobre qué datos se guardan y cómo se protegen, especialmente de menores de edad.' },
+  { q:'¿Puede la IA generar materiales didácticos?', a:'Sí, puede crear presentaciones, ejercicios, resúmenes y hasta videos educativos en minutos. El docente solo describe lo que necesita y luego revisa y ajusta el resultado.' },
+  { q:'¿Qué es la colaboración necesaria para que la IA funcione bien en la escuela?', a:'Significa que docentes, alumnos, directivos y desarrolladores deben trabajar juntos: unos guiando su uso, otros usándola con responsabilidad y otros creando reglas claras y herramientas éticas.' },
+  { q:'¿Cómo democratiza la IA el acceso al conocimiento?', a:'Permite que cualquier persona, sin importar dónde viva o sus recursos, pueda acceder a explicaciones claras y resúmenes de información que antes solo estaban disponibles con tutores privados costosos.' },
+  { q:'¿Qué pasa si un alumno depende demasiado de la IA?', a:'Puede perder la oportunidad de desarrollar sus propias habilidades de razonamiento y resolución de problemas. Por eso la IA debe usarse como apoyo, no como sustituto del esfuerzo propio.' },
+  { q:'¿La IA ayuda a ahorrar tiempo a los docentes?', a:'Sí, estudios indican que pueden ahorrar entre 3 y 5 horas semanales al usar IA para tareas administrativas como redactar reportes, organizar listas o buscar recursos.' },
+  { q:'¿Qué es el "Modelo Sense" mencionado en Puerto Rico?', a:'Es una guía que las escuelas de Puerto Rico desarrollaron para que los estudiantes usen la inteligencia artificial de forma ética, segura y responsable dentro del salón de clases.' },
+  { q:'¿Qué desafíos éticos trae la IA en la educación?', a:'Algunos son: la falta de reglas claras sobre privacidad de datos, el riesgo de que genere información falsa, y la posibilidad de que se use para hacer trampa en tareas o exámenes.' },
+  { q:'¿Por qué se dice que la IA "complementa" y no "reemplaza" la educación?', a:'Porque su función es apoyar el proceso de enseñanza y aprendizaje, no sustituir el papel humano del docente ni la capacidad de pensar y aprender por cuenta propia del estudiante.' },
+];
+
+function addMsg(text, who) {
+  const box = document.getElementById('chatBox');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + who;
+  el.innerHTML = text;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  return el;
+}
+
+let lastShown = [];
+
+function refreshSuggestions() {
+  let pool = qaBank.filter(item => !lastShown.includes(item.q));
+  if (pool.length < 4) pool = [...qaBank];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0,4);
+  lastShown = shuffled.map(item => item.q);
+  const box = document.getElementById('chatSugs');
+  box.innerHTML = '';
+  shuffled.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-sug';
+    btn.textContent = item.q;
+    btn.onclick = () => askQuestion(item);
+    box.appendChild(btn);
+  });
+}
+
+function askQuestion(item) {
+  addMsg(item.q, 'user');
+  setTimeout(() => { addMsg(item.a, 'bot'); }, 350);
+  refreshSuggestions();
+}
+
+// ── QUIZ: 8 questions per level, no exact-citation questions ──
+const quizData = {
+  facil: [
+    {q:'¿Qué significa IA?', opts:['Información Avanzada','Inteligencia Artificial','Internet Académico','Innovación Aplicada'], ans:1},
+    {q:'¿La IA reemplaza a los docentes?', opts:['Sí, completamente','No, los complementa','Solo en matemáticas','Solo en primaria'], ans:1},
+    {q:'¿Qué puede adaptar la IA para cada alumno?', opts:['El uniforme escolar','El horario','El contenido y ritmo de aprendizaje','El precio de los libros'], ans:2},
+    {q:'¿En qué ayuda la IA al docente con las evaluaciones?', opts:['Las elimina','Las optimiza y agiliza','Las hace más difíciles','Solo sirve para primaria'], ans:1},
+    {q:'¿Qué es un tutor virtual?', opts:['Un robot físico','Un programa de IA que ayuda a aprender','Un maestro sustituto humano','Un videojuego'], ans:1},
+    {q:'¿Qué tipo de tareas administrativas puede ahorrar la IA a un docente?', opts:['Dar clases','Redactar reportes y organizar listas','Calificar el comportamiento','Decidir el currículo'], ans:1},
+    {q:'¿Qué significa que la IA dé "retroalimentación inmediata"?', opts:['Que tarda una semana en responder','Que responde al instante cuando tienes una duda','Que solo responde los lunes','Que no responde nunca'], ans:1},
+    {q:'¿Cuál es un ejemplo de herramienta de IA usada en educación?', opts:['Una calculadora física','ChatGPT o Duolingo','Un pizarrón tradicional','Un libro impreso'], ans:1},
+  ],
+  medio: [
+    {q:'¿Qué es el "Modelo Sense" mencionado en Puerto Rico?', opts:['Un robot docente','Una guía para uso ético de la IA en escuelas','Una app de matemáticas','Un tipo de examen con IA'], ans:1},
+    {q:'¿Qué se necesita para que la IA se implemente con éxito en una escuela?', opts:['Solo buena conexión a internet','Muchas computadoras nuevas','Colaboración entre docentes, alumnos y desarrolladores','Reemplazar a todos los maestros'], ans:2},
+    {q:'¿Qué ventaja tiene la retroalimentación inmediata de la IA para los alumnos?', opts:['Elimina la necesidad de estudiar','Permite resolver dudas en el momento exacto','Hace los exámenes más fáciles','Sustituye al libro de texto'], ans:1},
+    {q:'¿Cuál es uno de los desafíos éticos de la IA en educación?', opts:['Que enseña demasiado rápido','Vacíos legales y preguntas de privacidad de datos','Que cuesta muy poco','Que solo funciona en inglés'], ans:1},
+    {q:'¿Por qué es importante la formación docente en el uso de IA?', opts:['Para que dejen de enseñar','Para que sepan integrarla bien y mantener el pensamiento crítico','Porque la IA no funciona sin formación','Para que cobren más'], ans:1},
+    {q:'¿Qué problema puede causar la IA si no se regula bien?', opts:['Que los alumnos aprendan demasiado','Sesgos y desconfianza por falta de reglas claras','Que las escuelas cierren','Que los maestros trabajen menos'], ans:1},
+    {q:'¿Cómo puede la IA ayudar a personalizar la enseñanza de un docente?', opts:['Decidiendo las calificaciones finales','Detectando qué alumnos necesitan más apoyo','Reemplazando las clases presenciales','Eliminando las tareas'], ans:1},
+    {q:'¿Qué significa que una herramienta de IA "democratice el conocimiento"?', opts:['Que solo unos pocos puedan usarla','Que facilite el acceso a información para todos por igual','Que sea gratuita siempre','Que vote sobre las respuestas'], ans:1},
+  ],
+  dificil: [
+    {q:'¿Qué riesgo representa que una IA "alucine" en un contexto educativo?', opts:['Que cree experiencias de realidad virtual','Que presente información falsa como si fuera verdadera','Que mejore la creatividad del alumno','Que las clases sean más interesantes'], ans:1},
+    {q:'¿Por qué la colaboración entre distintos actores es clave para integrar la IA en la educación?', opts:['Porque la tecnología sola no garantiza un buen uso ético y pedagógico','Porque así se reduce el costo de las licencias','Porque los desarrolladores deciden todo el currículo','Porque es un requisito legal en todos los países'], ans:0},
+    {q:'¿Cuál es la diferencia entre que la IA "reemplace" o "complemente" la educación?', opts:['Reemplazar y complementar significan lo mismo','Reemplazar elimina al docente; complementar lo apoya sin sustituirlo','Complementar es más caro que reemplazar','Reemplazar solo aplica a la educación primaria'], ans:1},
+    {q:'¿Qué implica la falta de transparencia en el uso de datos de los alumnos por plataformas de IA?', opts:['Que las plataformas sean más rápidas','Un riesgo de privacidad si no se sabe qué datos se recopilan ni cómo se usan','Que los alumnos aprendan más rápido','Que las escuelas ahorren dinero'], ans:1},
+    {q:'¿Por qué el pensamiento crítico sigue siendo importante aunque exista la IA?', opts:['Porque la IA puede equivocarse o sesgar información, y hay que saber evaluarla','Porque la IA nunca se usa en exámenes','Porque pensar críticamente ya no es necesario','Porque solo los docentes deben pensar críticamente'], ans:0},
+    {q:'¿Qué significa que la integración de la IA traiga "oportunidades y desafíos" a la vez?', opts:['Que solo trae beneficios sin ningún riesgo','Que mejora el aprendizaje pero también requiere atender temas éticos y de seguridad','Que solo trae problemas sin ningún beneficio','Que es opcional usarla en todos los casos'], ans:1},
+    {q:'¿Cómo contribuye la personalización del aprendizaje a reducir la desigualdad educativa?', opts:['Dando a todos exactamente el mismo contenido','Adaptando el ritmo y apoyo según las necesidades específicas de cada alumno','Eliminando las evaluaciones para todos por igual','Aumentando el costo de la educación privada'], ans:1},
+    {q:'¿Qué papel juegan las guías institucionales frente al uso de IA en el aula?', opts:['No tienen ningún papel relevante','Establecen reglas claras para un uso responsable y ético de la tecnología','Solo sirven para prohibir el uso de IA por completo','Reemplazan la necesidad de formación docente'], ans:1},
+  ]
+};
+
+let activeTab = 'facil';
+let answers = {};
+let submitted = false;
+
+function setTab(level) {
+  activeTab = level; submitted = false; answers = {};
+  ['facil','medio','dificil'].forEach(l => document.getElementById('tab-'+l).classList.toggle('active', l===level));
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const area = document.getElementById('quizArea');
+  const result = document.getElementById('quizResult');
+  result.style.display = 'none';
+  area.innerHTML = '';
+  const qs = quizData[activeTab];
+  const colors = {facil:'var(--green)',medio:'var(--yellow)',dificil:'var(--pink)'};
+  const numColor = colors[activeTab];
+
+  qs.forEach((q,qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    const numEl = document.createElement('div');
+    numEl.className = 'quiz-q-num'; numEl.style.background = numColor; numEl.textContent = qi+1;
+    const qText = document.createElement('div');
+    qText.className = 'quiz-q-text'; qText.textContent = q.q;
+    div.appendChild(numEl); div.appendChild(qText);
+
+    q.opts.forEach((opt,oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      const circle = document.createElement('span');
+      circle.style.cssText = 'width:20px;height:20px;border-radius:50%;border:2px solid #ccc;display:inline-block;flex-shrink:0;';
+      btn.appendChild(circle);
+      btn.appendChild(document.createTextNode(opt));
+      if (submitted) {
+        if (oi===q.ans) { btn.classList.add('correct'); circle.style.background='var(--green)'; circle.style.borderColor='var(--green)'; }
+        else if (oi===answers[qi]) { btn.classList.add('wrong'); circle.style.background='var(--pink)'; circle.style.borderColor='var(--pink)'; }
+        btn.disabled = true;
+      } else {
+        if (answers[qi]===oi) { circle.style.background=numColor; circle.style.borderColor='var(--dark)'; }
+        btn.onclick = () => { answers[qi]=oi; renderQuiz(); };
+      }
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  });
+
+  if (!submitted) {
+    const submitBtn = document.createElement('button');
+    submitBtn.className='btn btn-green';
+    submitBtn.style.cssText='width:100%;margin-top:6px;';
+    submitBtn.textContent='✓ Terminar Quiz';
+    submitBtn.onclick=()=>{ submitted=true; renderQuiz(); showResult(); };
+    area.appendChild(submitBtn);
+  }
+}
+
+function showResult() {
+  const qs = quizData[activeTab];
+  const correct = Object.entries(answers).filter(([i,a])=>a===qs[i].ans).length;
+  const total = qs.length;
+  const pct = Math.round(correct/total*100);
+  const titles = {100:'¡Perfecto!',75:'¡Muy bien!',50:'¡Buen intento!',0:'¡Sigue practicando!'};
+  const key = pct===100?100:pct>=75?75:pct>=50?50:0;
+
+  const res = document.getElementById('quizResult');
+  res.innerHTML = `<div class="quiz-result-box">
+    <div style="font-family:var(--font);font-size:30px;font-weight:700;margin-bottom:10px;">${titles[key]}</div>
+    <div style="font-family:var(--font);font-size:18px;font-weight:600;margin-bottom:20px;">Obtuviste <strong>${correct} de ${total}</strong> correctas (${pct}%)</div>
+    <button class="btn btn-purple" onclick="resetQuiz()">Intentar de nuevo</button>
+  </div>`;
+  res.style.display='block';
+}
+
+function resetQuiz() {
+  submitted=false; answers={};
+  document.getElementById('quizResult').style.display='none';
+  renderQuiz();
+}
+
+// INIT
+buildDots();
+renderQuiz();
+refreshSuggestions();
+document.getElementById('refBtn').classList.toggle('hidden', current===8);
+</script>
+</body>
+</html>
